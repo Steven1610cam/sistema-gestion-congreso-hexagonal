@@ -1,6 +1,7 @@
 package com.danielarroyo.congreso.infraestructura.controladores;
 
 import com.danielarroyo.congreso.casosdeuso.puertos.entrada.*;
+import com.danielarroyo.congreso.casosdeuso.puertos.salida.ConsultasAvanzadasRepository;
 import com.danielarroyo.congreso.casosdeuso.servicios.*;
 import com.danielarroyo.congreso.infraestructura.adaptadores.*;
 
@@ -17,6 +18,9 @@ public class SistemaController {
     private final GestionarSesionUseCase gestionarSesionUseCase;
     private final GestionarSalaUseCase gestionarSalaUseCase;
     
+    // Repository para consultas avanzadas
+    private final ConsultasAvanzadasRepository consultasAvanzadasRepository;
+    
     // Constructor con inyección de dependencias manual
     public SistemaController() {
         // Crear repositories (adaptadores)
@@ -24,6 +28,9 @@ public class SistemaController {
         TrabajoRepositoryImpl trabajoRepo = new TrabajoRepositoryImpl();
         SesionRepositoryImpl sesionRepo = new SesionRepositoryImpl();
         SalaRepositoryImpl salaRepo = new SalaRepositoryImpl();
+        
+        // Crear repository de consultas avanzadas
+        this.consultasAvanzadasRepository = new ConsultasAvanzadasRepositoryImpl();
         
         // Crear servicios (casos de uso)
         this.gestionarCongresistaUseCase = new CongresistaService(congresistaRepo);
@@ -47,5 +54,10 @@ public class SistemaController {
     
     public GestionarSalaUseCase getSalas() {
         return gestionarSalaUseCase;
+    }
+    
+    // Getter para consultas avanzadas
+    public ConsultasAvanzadasRepository getConsultasAvanzadas() {
+        return consultasAvanzadasRepository;
     }
 }

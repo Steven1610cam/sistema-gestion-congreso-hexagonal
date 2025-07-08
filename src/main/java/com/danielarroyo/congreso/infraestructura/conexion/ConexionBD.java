@@ -12,8 +12,8 @@ public class ConexionBD {
     
     // Configuración de BD - usar variables de entorno en producción
     private static final String URL = "jdbc:mysql://localhost:3306/gestion_congreso?zeroDateTimeBehavior=CONVERT_TO_NULL";
-    private static final String USUARIO = "daniel";
-    private static final String PASSWORD = "6860179";
+    private static final String USUARIO = "root";
+    private static final String PASSWORD = "flee";
     
     /**
      * Obtener conexión a MySQL
@@ -38,5 +38,9 @@ public class ConexionBD {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static Object getInstancia() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }
