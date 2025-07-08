@@ -5,6 +5,7 @@ import com.danielarroyo.congreso.infraestructura.dto.*;
 import com.danielarroyo.congreso.infraestructura.conexion.ConexionBD;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
 
@@ -159,21 +160,11 @@ private void configurarConsultas() {
             
             // Ejecutar según categoría
             switch (item.categoria) {
-                case "congresistas":
-                    ejecutarConsultaCongresistas(item.tipo);
-                    break;
-                case "trabajos":
-                    ejecutarConsultaTrabajos(item.tipo);
-                    break;
-                case "comites":
-                    ejecutarConsultaComites(item.tipo);
-                    break;
-                case "sesiones":
-                    ejecutarConsultaSesiones(item.tipo);
-                    break;
-                case "estadisticas":
-                    ejecutarConsultaEstadisticas(item.tipo);
-                    break;
+                case "congresistas" -> ejecutarConsultaCongresistas(item.tipo);
+                case "trabajos" -> ejecutarConsultaTrabajos(item.tipo);
+                case "comites" -> ejecutarConsultaComites(item.tipo);
+                case "sesiones" -> ejecutarConsultaSesiones(item.tipo);
+                case "estadisticas" -> ejecutarConsultaEstadisticas(item.tipo);
             }
             
         } catch (Exception e) {
@@ -197,70 +188,162 @@ private void configurarConsultas() {
      * IMPLEMENTAR EL BOTÓN EJECUTAR
      */
 
+// REEMPLAZAR los métodos ejecutarConsulta en DashboardPrincipal.java
+
 /**
- * Ejecutar consultas de congresistas
+ * Ejecutar consultas de congresistas - CON PARÁMETROS
  */
 private void ejecutarConsultaCongresistas(String tipo) {
-        List<CongresistaResponseDTO> resultados;
-        String titulo;
-        
-        switch (tipo) {
-            case "potenciales_asistentes":
-            case "info_basica":
-                resultados = sistema.getCongresistas().obtenerTodosCongresistas();
-                titulo = "Información de Congresistas";
-                break;
-            case "con_telefono":
-                resultados = sistema.getCongresistas().obtenerCongresistasConTelefono();
-                titulo = "Congresistas con Teléfono Móvil";
-                break;
-            case "comite_organizador":
-                resultados = sistema.getCongresistas().obtenerMiembrosComiteOrganizador();
-                titulo = "Miembros del Comité Organizador";
-                break;
-            default:
-                mostrarMensaje("Esta consulta será implementada próximamente");
+    List<CongresistaResponseDTO> resultados;
+    String titulo;
+    
+    switch (tipo) {
+        case "potenciales_asistentes":
+        case "info_basica":
+            resultados = sistema.getCongresistas().obtenerTodosCongresistas();
+            titulo = "Información de Congresistas";
+            break;
+            
+        case "con_telefono":
+            resultados = sistema.getCongresistas().obtenerCongresistasConTelefono();
+            titulo = "Congresistas con Teléfono Móvil";
+            break;
+            
+        case "comite_organizador":
+            resultados = sistema.getCongresistas().obtenerMiembrosComiteOrganizador();
+            titulo = "Miembros del Comité Organizador";
+            break;
+            
+        case "sin_email":
+            resultados = obtenerCongresistasConsultaEspecial("sin_email");
+            titulo = "Congresistas Sin Email";
+            break;
+            
+        case "por_letra":
+            String letra = solicitarParametro("Ingrese la letra inicial (A-Z):", "Filtrar por Letra");
+            if (letra == null) return;
+            resultados = obtenerCongresistasConsultaEspecial("por_letra_" + letra.toUpperCase());
+            titulo = "Congresistas que empiezan con '" + letra.toUpperCase() + "'";
+            break;
+            
+        case "despues_fecha":
+            String fechaStr = solicitarParametro("Ingrese la fecha (YYYY-MM-DD):", "Filtrar por Fecha");
+            if (fechaStr == null) return;
+            try {
+                java.time.LocalDate.parse(fechaStr); // Validar formato
+                resultados = obtenerCongresistasConsultaEspecial("despues_fecha_" + fechaStr);
+                titulo = "Registrados después del " + fechaStr;
+            } catch (Exception e) {
+                mostrarMensaje("Fecha inválida. Use formato YYYY-MM-DD");
                 return;
-        }
-        
-        mostrarResultadosCongresistas(resultados, titulo);
+            }
+            break;
+            
+        case "sin_trabajos":
+            resultados = obtenerCongresistasConsultaEspecial("sin_trabajos");
+            titulo = "Congresistas Sin Trabajos Enviados";
+            break;
+            
+        case "son_chairman":
+            resultados = obtenerCongresistasConsultaEspecial("son_chairman");
+            titulo = "Congresistas que son Chairman";
+            break;
+            
+        default:
+            mostrarMensaje("Esta consulta será implementada próximamente");
+            return;
     }
+    
+    mostrarResultadosCongresistas(resultados, titulo);
+}
 
 /**
- * Ejecutar consultas de trabajos
+ * Ejecutar consultas de trabajos - CON PARÁMETROS
  */
 private void ejecutarConsultaTrabajos(String tipo) {
-        List<TrabajoResponseDTO> resultados;
-        String titulo;
-        
-        switch (tipo) {
-            case "seleccionados":
-                resultados = sistema.getTrabajos().obtenerTrabajosSeleccionados();
-                titulo = "Trabajos Seleccionados para Presentación";
-                break;
-            case "sin_revisar":
-                resultados = sistema.getTrabajos().obtenerTrabajosSinRevisar();
-                titulo = "Trabajos Sin Revisar";
-                break;
-            case "total_enviados":
-                Long total = sistema.getTrabajos().contarTotalTrabajos();
-                mostrarMensaje("Total de trabajos enviados: " + total);
-                return;
-            case "ordenados_titulo":
-                resultados = sistema.getTrabajos().obtenerTrabajosOrdenadosPorTitulo();
-                titulo = "Trabajos Ordenados por Título";
-                break;
-            default:
-                mostrarMensaje("Esta consulta será implementada próximamente");
-                return;
-        }
-        
-        mostrarResultadosTrabajos(resultados, titulo);
+    switch (tipo) {
+        case "seleccionados":
+            List<TrabajoResponseDTO> seleccionados = sistema.getTrabajos().obtenerTrabajosSeleccionados();
+            mostrarResultadosTrabajos(seleccionados, "Trabajos Seleccionados para Presentación");
+            break;
+            
+        case "sin_revisar":
+            List<TrabajoResponseDTO> sinRevisar = sistema.getTrabajos().obtenerTrabajosSinRevisar();
+            mostrarResultadosTrabajos(sinRevisar, "Trabajos Sin Revisar");
+            break;
+            
+        case "total_enviados":
+            Long total = sistema.getTrabajos().contarTotalTrabajos();
+            mostrarMensaje("📊 Total de trabajos enviados: " + total + " trabajos");
+            break;
+            
+        case "ordenados_titulo":
+            List<TrabajoResponseDTO> ordenados = sistema.getTrabajos().obtenerTrabajosOrdenadosPorTitulo();
+            mostrarResultadosTrabajos(ordenados, "Trabajos Ordenados por Título");
+            break;
+            
+        case "por_autor":
+            String autor = solicitarParametro("Ingrese el nombre del autor a buscar:", "Buscar por Autor");
+            if (autor == null) return;
+            List<TrabajoResponseDTO> porAutor = obtenerTrabajosConsultaEspecial("por_autor_" + autor);
+            mostrarResultadosTrabajos(porAutor, "Trabajos de '" + autor + "'");
+            break;
+            
+        case "por_institucion":
+            String institucion = solicitarParametro("Ingrese el nombre de la institución:", "Buscar por Institución");
+            if (institucion == null) return;
+            List<TrabajoResponseDTO> porInstitucion = sistema.getTrabajos().obtenerTrabajosPorInstitucion(institucion);
+            mostrarResultadosTrabajos(porInstitucion, "Trabajos de " + institucion);
+            break;
+            
+        case "palabras_clave":
+            String palabras = solicitarParametro("Ingrese las palabras clave a buscar:", "Buscar por Palabras Clave");
+            if (palabras == null) return;
+            List<TrabajoResponseDTO> conPalabras = sistema.getTrabajos().obtenerTrabajosPorPalabrasClave(palabras);
+            mostrarResultadosTrabajos(conPalabras, "Trabajos con '" + palabras + "'");
+            break;
+            
+        case "autores_telefono":
+            List<TrabajoResponseDTO> autoresTel = obtenerTrabajosConsultaEspecial("autores_telefono");
+            mostrarResultadosTrabajos(autoresTel, "Trabajos de Autores con Teléfono");
+            break;
+            
+        case "resumen_largo":
+            List<TrabajoResponseDTO> resumenLargo = sistema.getTrabajos().obtenerTrabajosConResumenLargo(300);
+            mostrarResultadosTrabajos(resumenLargo, "Trabajos con Resumen Largo (>300 caracteres)");
+            break;
+            
+        case "cantidad_por_autor":
+            List<ConsultaResultadoDTO> cantidadAutor = sistema.getTrabajos().obtenerAutoresConMasTrabajos();
+            mostrarResultadosEstadisticas(cantidadAutor, "Cantidad de Trabajos por Autor");
+            break;
+            
+        case "autores_multiples":
+            List<ConsultaResultadoDTO> autoresMultiples = sistema.getTrabajos().obtenerAutoresConMasTrabajos();
+            mostrarResultadosEstadisticas(autoresMultiples, "Autores con Múltiples Trabajos");
+            break;
+            
+        case "mas_populares":
+            List<ConsultaResultadoDTO> populares = sistema.getTrabajos().obtenerTrabajosPopulares();
+            mostrarResultadosEstadisticas(populares, "Trabajos Más Populares");
+            break;
+            
+        case "por_sesion":
+            String sesionId = solicitarParametro("Ingrese el ID de la sesión:", "Trabajos por Sesión");
+            if (sesionId == null) return;
+            try {
+                Integer id = Integer.parseInt(sesionId);
+                List<TrabajoResponseDTO> porSesion = obtenerTrabajosConsultaEspecial("por_sesion_" + id);
+                mostrarResultadosTrabajos(porSesion, "Trabajos de la Sesión " + id);
+            } catch (NumberFormatException e) {
+                mostrarMensaje("ID inválido. Debe ser un número");
+            }
+            break;
+            
+        default:
+            mostrarMensaje("Esta consulta será implementada próximamente");
     }
-
-/**
- * Ejecutar consultas de comités
- */
+}
 private void ejecutarConsultaComites(String tipo) {
         switch (tipo) {
             case "miembros_seleccion":
@@ -272,64 +355,226 @@ private void ejecutarConsultaComites(String tipo) {
                 mostrarMensaje("Esta consulta será implementada próximamente");
         }
     }
-
 /**
- * Ejecutar consultas de sesiones
+ * Ejecutar consultas de sesiones - CON PARÁMETROS
  */
 private void ejecutarConsultaSesiones(String tipo) {
-        List<SesionResponseDTO> resultados;
-        String titulo;
-        
-        switch (tipo) {
-            case "info_sesiones":
-                resultados = sistema.getSesiones().obtenerTodasSesiones();
-                titulo = "Información de Todas las Sesiones";
-                break;
-            case "sin_chairman":
-                resultados = sistema.getSesiones().obtenerSesionesSinChairman();
-                titulo = "Sesiones Sin Chairman Designado";
-                break;
-            case "sin_sala":
-                resultados = sistema.getSesiones().obtenerSesionesSinSalaAsignada();
-                titulo = "Sesiones Sin Sala Asignada";
-                break;
-            case "menos_tres":
-                resultados = sistema.getSesiones().obtenerSesionesConMenosDeTresTrabajos();
-                titulo = "Sesiones con Menos de 3 Trabajos";
-                break;
-            case "ordenadas_fecha":
-                resultados = sistema.getSesiones().obtenerSesionesOrdenadasPorFechaHora();
-                titulo = "Sesiones Ordenadas por Fecha y Hora";
-                break;
-            default:
-                mostrarMensaje("Esta consulta será implementada próximamente");
-                return;
-        }
-        
-        mostrarResultadosSesiones(resultados, titulo);
+    switch (tipo) {
+        case "info_sesiones":
+            List<SesionResponseDTO> todas = sistema.getSesiones().obtenerTodasSesiones();
+            mostrarResultadosSesiones(todas, "Información de Todas las Sesiones");
+            break;
+            
+        case "sin_chairman":
+            List<SesionResponseDTO> sinChairman = sistema.getSesiones().obtenerSesionesSinChairman();
+            mostrarResultadosSesiones(sinChairman, "Sesiones Sin Chairman Designado");
+            break;
+            
+        case "sin_sala":
+            List<SesionResponseDTO> sinSala = sistema.getSesiones().obtenerSesionesSinSalaAsignada();
+            mostrarResultadosSesiones(sinSala, "Sesiones Sin Sala Asignada");
+            break;
+            
+        case "menos_tres":
+            List<SesionResponseDTO> menosTres = sistema.getSesiones().obtenerSesionesConMenosDeTresTrabajos();
+            mostrarResultadosSesiones(menosTres, "Sesiones con Menos de 3 Trabajos");
+            break;
+            
+        case "ordenadas_fecha":
+            List<SesionResponseDTO> ordenadas = sistema.getSesiones().obtenerSesionesOrdenadasPorFechaHora();
+            mostrarResultadosSesiones(ordenadas, "Sesiones Ordenadas por Fecha y Hora");
+            break;
+            
+        case "por_dia":
+            String fechaStr = solicitarParametro("Ingrese la fecha (YYYY-MM-DD):", "Sesiones por Día");
+            if (fechaStr == null) return;
+            try {
+                java.time.LocalDate fecha = java.time.LocalDate.parse(fechaStr);
+                List<SesionResponseDTO> porDia = sistema.getSesiones().obtenerSesionesPorFecha(fecha);
+                mostrarResultadosSesiones(porDia, "Sesiones del " + fechaStr);
+            } catch (Exception e) {
+                mostrarMensaje("Fecha inválida. Use formato YYYY-MM-DD");
+            }
+            break;
+            
+        case "por_chairman":
+            String chairmanId = solicitarParametro("Ingrese el ID del chairman:", "Buscar por Chairman");
+            if (chairmanId == null) return;
+            try {
+                Integer id = Integer.parseInt(chairmanId);
+                List<SesionResponseDTO> porChairman = sistema.getSesiones().obtenerSesionesPorChairman(id);
+                mostrarResultadosSesiones(porChairman, "Sesiones del Chairman " + id);
+            } catch (NumberFormatException e) {
+                mostrarMensaje("ID inválido. Debe ser un número");
+            }
+            break;
+            
+        case "salas_sesion":
+            List<ConsultaResultadoDTO> salasSesion = obtenerConsultaEspecialSesiones("salas_sesion");
+            mostrarResultadosEstadisticas(salasSesion, "Salas Designadas por Sesión");
+            break;
+            
+        case "ponentes_sesion":
+            List<ConsultaResultadoDTO> ponentes = obtenerConsultaEspecialSesiones("ponentes_sesion");
+            mostrarResultadosEstadisticas(ponentes, "Lista de Ponentes por Sesión");
+            break;
+            
+        case "ponentes_trabajos":
+            String sesionIdPT = solicitarParametro("Ingrese el ID de la sesión:", "Ponentes y Trabajos");
+            if (sesionIdPT == null) return;
+            try {
+                Integer id = Integer.parseInt(sesionIdPT);
+                List<ConsultaResultadoDTO> ponentesTrabajos = obtenerConsultaEspecialSesiones("ponentes_trabajos_" + id);
+                mostrarResultadosEstadisticas(ponentesTrabajos, "Ponentes y Trabajos de la Sesión " + id);
+            } catch (NumberFormatException e) {
+                mostrarMensaje("ID inválido. Debe ser un número");
+            }
+            break;
+            
+        case "chairman_sesion":
+            String sesionIdCS = solicitarParametro("Ingrese el ID de la sesión:", "Chairman de Sesión");
+            if (sesionIdCS == null) return;
+            try {
+                Integer id = Integer.parseInt(sesionIdCS);
+                List<ConsultaResultadoDTO> chairman = obtenerConsultaEspecialSesiones("chairman_sesion_" + id);
+                mostrarResultadosEstadisticas(chairman, "Chairman de la Sesión " + id);
+            } catch (NumberFormatException e) {
+                mostrarMensaje("ID inválido. Debe ser un número");
+            }
+            break;
+            
+        case "moderadas_comite":
+            List<ConsultaResultadoDTO> moderadas = obtenerConsultaEspecialSesiones("moderadas_comite");
+            mostrarResultadosEstadisticas(moderadas, "Sesiones Moderadas por Comité Organizador");
+            break;
+            
+        default:
+            mostrarMensaje("Esta consulta será implementada próximamente");
     }
+}
 
 /**
- * Ejecutar consultas de estadísticas
+ * Ejecutar consultas de estadísticas - AMPLIADAS
  */
 private void ejecutarConsultaEstadisticas(String tipo) {
-        switch (tipo) {
-            case "sesiones_mas_trabajos":
-                List<ConsultaResultadoDTO> sesionesPopulares = sistema.getSesiones().obtenerSesionesConMasTrabajos();
-                mostrarResultadosEstadisticas(sesionesPopulares, "Sesiones con Más Trabajos");
-                break;
-            case "autores_multiples":
-                List<ConsultaResultadoDTO> autoresActivos = sistema.getTrabajos().obtenerAutoresConMasTrabajos();
-                mostrarResultadosEstadisticas(autoresActivos, "Autores con Múltiples Trabajos");
-                break;
-            case "trabajos_sesion_popular":
-                List<ConsultaResultadoDTO> trabajosPopulares = sistema.getTrabajos().obtenerTrabajosPopulares();
-                mostrarResultadosEstadisticas(trabajosPopulares, "Trabajos Más Populares");
-                break;
-            default:
-                mostrarMensaje("Esta consulta será implementada próximamente");
-        }
+    switch (tipo) {
+        case "sesiones_mas_trabajos":
+            List<ConsultaResultadoDTO> sesionesPopulares = sistema.getSesiones().obtenerSesionesConMasTrabajos();
+            mostrarResultadosEstadisticas(sesionesPopulares, "Sesiones con Más Trabajos");
+            break;
+            
+        case "trabajos_sesion_popular":
+            List<ConsultaResultadoDTO> trabajosPopulares = sistema.getTrabajos().obtenerTrabajosPopulares();
+            mostrarResultadosEstadisticas(trabajosPopulares, "Trabajos Más Populares");
+            break;
+            
+        case "sesiones_area":
+            String area = solicitarParametro("Ingrese el área de investigación:", "Sesiones por Área");
+            if (area == null) return;
+            List<ConsultaResultadoDTO> porArea = obtenerConsultaEspecialEstadisticas("sesiones_area_" + area);
+            mostrarResultadosEstadisticas(porArea, "Sesiones del área: " + area);
+            break;
+            
+        case "autores_no_ponentes":
+            List<ConsultaResultadoDTO> autoresNoPonentes = obtenerConsultaEspecialEstadisticas("autores_no_ponentes");
+            mostrarResultadosEstadisticas(autoresNoPonentes, "Autores que No son Ponentes");
+            break;
+            
+        case "sesiones_dia_sala":
+            String fecha = solicitarParametro("Ingrese la fecha (YYYY-MM-DD):", "Sesiones por Día y Sala");
+            if (fecha == null) return;
+            String salaId = solicitarParametro("Ingrese el ID de la sala:", "ID de Sala");
+            if (salaId == null) return;
+            try {
+                Integer id = Integer.parseInt(salaId);
+                java.time.LocalDate fechaLocal = java.time.LocalDate.parse(fecha);
+                List<SesionResponseDTO> sesiones = sistema.getSesiones().obtenerSesionesPorFechaYSala(fechaLocal, id);
+                mostrarResultadosSesiones(sesiones, "Sesiones del " + fecha + " en Sala " + id);
+            } catch (Exception e) {
+                mostrarMensaje("Formato inválido. Use YYYY-MM-DD para fecha y número para sala");
+            }
+            break;
+            
+        case "asistentes_apellido":
+            List<CongresistaResponseDTO> ordenadosApellido = obtenerCongresistasConsultaEspecial("ordenados_apellido");
+            mostrarResultadosCongresistas(ordenadosApellido, "Asistentes Ordenados por Apellido");
+            break;
+            
+        case "nombres_comunes":
+            String nombreComun = solicitarParametro("Ingrese el nombre común a buscar:", "Nombres Comunes");
+            if (nombreComun == null) return;
+            List<CongresistaResponseDTO> nombresComunes = obtenerCongresistasConsultaEspecial("nombres_comunes_" + nombreComun);
+            mostrarResultadosCongresistas(nombresComunes, "Autores con nombre: " + nombreComun);
+            break;
+            
+        default:
+            mostrarMensaje("Esta consulta será implementada próximamente");
     }
+}
+
+// ===== MÉTODOS AUXILIARES =====
+
+/**
+ * Solicitar parámetro al usuario
+ */
+private String solicitarParametro(String mensaje, String titulo) {
+    String parametro = javax.swing.JOptionPane.showInputDialog(this, mensaje, titulo, 
+        javax.swing.JOptionPane.QUESTION_MESSAGE);
+    if (parametro == null || parametro.trim().isEmpty()) {
+        mostrarMensaje("Operación cancelada");
+        return null;
+    }
+    return parametro.trim();
+}
+
+/**
+ * Obtener congresistas con consulta especial (simulado por ahora)
+ */
+private List<CongresistaResponseDTO> obtenerCongresistasConsultaEspecial(String tipoConsulta) {
+    // TODO: Implementar con ConsultasAvanzadasRepository
+    mostrarMensaje("Consulta '" + tipoConsulta + "' simulada - En desarrollo");
+    
+    // Por ahora retornar datos simulados para demostración
+    List<CongresistaResponseDTO> simulados = new ArrayList<>();
+    
+    if (tipoConsulta.equals("sin_email")) {
+        // Simular congresistas sin email
+        return simulados; // Lista vacía por ahora
+    } else if (tipoConsulta.startsWith("por_letra_")) {
+        // Simular filtro por letra
+        String letra = tipoConsulta.substring(10);
+        // Filtrar congresistas existentes por letra
+        return sistema.getCongresistas().obtenerTodosCongresistas().stream()
+            .filter(c -> c.getNombre().toUpperCase().startsWith(letra))
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    return simulados;
+}
+
+/**
+ * Obtener trabajos con consulta especial (simulado por ahora)  
+ */
+private List<TrabajoResponseDTO> obtenerTrabajosConsultaEspecial(String tipoConsulta) {
+    mostrarMensaje("Consulta '" + tipoConsulta + "' simulada - En desarrollo");
+    return new ArrayList<>();
+}
+
+/**
+ * Obtener consulta especial de sesiones (simulado por ahora)
+ */
+private List<ConsultaResultadoDTO> obtenerConsultaEspecialSesiones(String tipoConsulta) {
+    mostrarMensaje("Consulta '" + tipoConsulta + "' simulada - En desarrollo");
+    return new ArrayList<>();
+}
+
+/**
+ * Obtener consulta especial de estadísticas (simulado por ahora)
+ */
+private List<ConsultaResultadoDTO> obtenerConsultaEspecialEstadisticas(String tipoConsulta) {
+    mostrarMensaje("Consulta '" + tipoConsulta + "' simulada - En desarrollo");
+    return new ArrayList<>();
+}
 
 /**
  * Mostrar resultados de congresistas

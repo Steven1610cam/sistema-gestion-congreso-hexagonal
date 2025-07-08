@@ -129,10 +129,19 @@ public class VentanaPresentacion extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
        if (conexionActiva) {
-        javax.swing.JOptionPane.showMessageDialog(this, "¡Conexión exitosa!", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        // Abrir el dashboard principal
+        DashboardPrincipal dashboard = new DashboardPrincipal();
+        dashboard.setVisible(true);
+        
+        // Cerrar ventana de presentación
+        this.dispose();
+        
     } else {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error de conexión a BD", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-    } 
+        javax.swing.JOptionPane.showMessageDialog(this, 
+            "Error: No hay conexión a la base de datos.\nVerifique la configuración.", 
+            "Error de Conexión", 
+            javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
         
     }//GEN-LAST:event_jButton1ActionPerformed
 
